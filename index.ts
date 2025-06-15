@@ -97,6 +97,8 @@ const SearchTechstackLibraryArgsSchema = z.object({
   query: z.string(),
   language: z.string(),
   package_manager: z.string(),
+  language_version: z.string(),
+  framework: z.string(),
 });
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
@@ -127,7 +129,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "Search the techstack library for a given query. " +
           "Use this tool when you need to search the techstack library for a given query. " +
           "Only works within allowed directories.",
-        inputSchema: zodToJsonSchema(ReadFileArgsSchema) as ToolInput,
+        inputSchema: zodToJsonSchema(SearchTechstackLibraryArgsSchema) as ToolInput,
       },
     ],
   };
@@ -139,15 +141,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     switch (name) {
-      case "read_file": {
-        const parsed = ReadFileArgsSchema.safeParse(args);
+      case "search_techstack_library": {
+        const parsed = SearchTechstackLibraryArgsSchema.safeParse(args);
         if (!parsed.success) {
-          throw new Error(`Invalid arguments for read_file: ${parsed.error}`);
+          throw new Error(`Invalid arguments for search_techstack_library: ${parsed.error}`);
         }
-        const validPath = await validatePath(parsed.data.path);
-        const content = await fs.readFile(validPath, "utf-8");
+
+        const query = parsed.data.query;
+        const language = parsed.data.language;
+        const package_manager = parsed.data.package_manager;
+        const language_version = parsed.data.language_version;
+
+        const search_query = `query: ${query} language: ${language} package_manager: ${package_manager} language_version: ${language_version}`;
+
         return {
-          content: [{ type: "text", text: content }],
+          content: [{ type: "text", text: `
+            for to do, you can use \`stream-json\`
+            usage: 
+            install:
+            - npm install stream-json
+            usage:
+             - llm.txt
+            ` }],
         };
       }
 
